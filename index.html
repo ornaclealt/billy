@@ -16,6 +16,21 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #fafafa; color: #171717; -webkit-tap-highlight-color: transparent; }
         
+        /* Animasi munculnya pesan satu per satu */
+        #feed-container > div {
+            animation: slideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Memberikan jeda animasi untuk tiap elemen (looping otomatis di JS nanti) */
+        #feed-container > div:nth-child(1) { animation-delay: 0.1s; }
+        #feed-container > div:nth-child(2) { animation-delay: 0.15s; }
+        #feed-container > div:nth-child(3) { animation-delay: 0.2s; }
+                
         /* Secreto Style Background */
         .bg-pattern {
             background-color: #fafafa;
@@ -156,9 +171,9 @@
                     
                     <div class="flex justify-between items-center pt-3 mt-2 border-t border-dashed border-gray-100">
                         <div class="flex items-center gap-1">
-                            <label class="cursor-pointer text-gray-400 hover:text-gray-900 transition p-2 hover:bg-gray-100 rounded-full" title="Upload Gambar">
-                                <i data-lucide="image" class="w-5 h-5"></i>
-                                <input type="file" id="file-image" accept="image/*" class="hidden" onchange="media.handleImage(this)">
+                            <label class="cursor-pointer text-gray-400 hover:text-gray-900 transition p-2 hover:bg-gray-100 rounded-full" title="Upload Dokumen">
+                              <i data-lucide="file-plus" class="w-5 h-5"></i>
+                                <input type="file" id="file-doc" accept=".pdf,.doc,.docx,.txt" class="hidden" onchange="media.handleDocument(this)">
                             </label>
                             
                             <button id="btn-record" onclick="media.toggleRecording()" class="text-gray-400 hover:text-red-600 transition p-2 hover:bg-red-50 rounded-full flex items-center gap-2">
@@ -175,26 +190,41 @@
             </section>
 
             <!-- Timeline Header -->
-            <div class="flex items-center justify-between px-2 mb-4">
-                <h3 class="font-bold text-gray-900 text-sm flex items-center gap-2">
-                    <i data-lucide="inbox" class="w-4 h-4"></i> Timeline
-                </h3>
-                <span id="msg-count" class="text-[10px] font-bold text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">0</span>
+            <div class="px-2 mb-6 space-y-4 animate-enter">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <div class="p-1.5 bg-black text-white rounded-lg shadow-sm">
+                <i data-lucide="layout-list" class="w-4 h-4"></i>
             </div>
-
-            <!-- Feed -->
-            <div id="feed-container" class="space-y-4 min-h-[200px]">
-                <!-- Skeleton -->
-                <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm animate-pulse space-y-3">
-                    <div class="flex gap-3">
-                        <div class="w-8 h-8 bg-gray-100 rounded-full"></div>
-                        <div class="w-24 h-3 bg-gray-100 rounded mt-2"></div>
-                    </div>
-                    <div class="w-full h-12 bg-gray-100 rounded-xl"></div>
-                </div>
-            </div>
+            <h3 class="font-bold text-gray-900 text-sm tracking-tight">Timeline Pesan</h3>
         </div>
-    </main>
+        <div class="flex items-center gap-1.5 bg-white border border-gray-100 px-3 py-1 rounded-full shadow-sm">
+            <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            <span id="msg-count" class="text-[11px] font-black text-gray-700">0</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-12 gap-2">
+        <div class="col-span-8 relative group">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black group-focus-within:scale-110 transition-all duration-300"></i>
+            <input type="text" id="search-input" oninput="app.listenMessages()" placeholder="Cari kata kunci..." 
+                class="w-full pl-10 pr-4 py-2.5 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-2xl text-xs font-medium placeholder:text-gray-400 focus:bg-white focus:border-black focus:ring-4 focus:ring-black/5 outline-none transition-all duration-300 shadow-sm">
+        </div>
+        
+        <div class="col-span-4 relative">
+            <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+            <select id="sort-select" onchange="app.listenMessages()" 
+                class="w-full appearance-none bg-white/60 backdrop-blur-sm border border-gray-200 rounded-2xl pl-4 pr-10 py-2.5 text-xs font-bold text-gray-700 focus:bg-white focus:border-black outline-none transition-all duration-300 shadow-sm cursor-pointer">
+                <option value="newest">Terbaru</option>
+                <option value="oldest">Terlama</option>
+                <option value="popular">Populer</option>
+            </select>
+        </div>
+    </div>
+</div>
 
     <!-- MODAL EDIT PROFILE (Clean Design) -->
     <div id="modal-settings" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-enter">
@@ -287,79 +317,47 @@
             closeModal: (id) => document.getElementById(id).classList.add('hidden')
         };
 
-        const media = {
-            handleImage: async (input) => {
-                const file = input.files[0];
-                if (!file) return;
-                try {
-                    ui.showToast('Memproses gambar...', 'info');
-                    const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1024, useWebWorker: true };
-                    const compressedFile = await imageCompression(file, options);
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        currentFile = { base64: e.target.result, type: 'image', name: file.name };
-                        document.getElementById('preview-img').src = e.target.result;
-                        document.getElementById('preview-img').classList.remove('hidden');
-                        document.getElementById('preview-area').classList.remove('hidden');
-                        ui.showToast('Foto siap!', 'success');
-                    };
-                    reader.readAsDataURL(compressedFile);
-                } catch (e) { ui.showToast('Gagal proses: ' + e.message, 'error'); }
-            },
-            toggleRecording: async () => {
-                const btn = document.getElementById('btn-record');
-                const timer = document.getElementById('recording-timer');
-                if (!recorder || recorder.state === 'inactive') {
-                    try {
-                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                        recorder = new MediaRecorder(stream);
-                        audioChunks = [];
-                        recorder.ondataavailable = e => audioChunks.push(e.data);
-                        recorder.onstop = () => {
-                            const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                            const reader = new FileReader();
-                            reader.onload = e => {
-                                currentFile = { base64: e.target.result, type: 'audio', name: 'voice.webm' };
-                                const audioEl = document.getElementById('preview-audio');
-                                audioEl.src = e.target.result;
-                                audioEl.classList.remove('hidden');
-                                document.getElementById('preview-area').classList.remove('hidden');
-                            };
-                            reader.readAsDataURL(blob);
-                            stream.getTracks().forEach(t => t.stop());
-                            clearInterval(recordInterval);
-                            timer.classList.add('hidden');
-                            btn.classList.remove('text-red-600', 'bg-red-50', 'recording-active');
-                        };
-                        recorder.start();
-                        btn.classList.add('text-red-600', 'bg-red-50', 'recording-active');
-                        timer.classList.remove('hidden');
-                        recordStartTime = Date.now();
-                        recordInterval = setInterval(() => {
-                            const diff = Math.floor((Date.now() - recordStartTime) / 1000);
-                            const m = Math.floor(diff / 60).toString().padStart(2, '0');
-                            const s = (diff % 60).toString().padStart(2, '0');
-                            timer.innerText = `${m}:${s}`;
-                        }, 1000);
-                    } catch (e) { ui.showToast('Butuh izin mikrofon!', 'error'); }
-                } else { recorder.stop(); }
-            },
-            handleAvatarUpload: (input) => {
-                const file = input.files[0];
-                if(file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => document.getElementById('edit-avatar-preview').src = e.target.result;
-                    reader.readAsDataURL(file);
-                }
-            },
-            clear: () => {
-                currentFile = { base64: null, type: null, name: null };
-                document.getElementById('preview-area').classList.add('hidden');
-                document.getElementById('preview-img').classList.add('hidden');
-                document.getElementById('preview-audio').classList.add('hidden');
-                document.getElementById('file-image').value = '';
-            }
+        // ... kode lainnya ...
+      const media = {
+    handleImage: async (input) => { 
+        /* kode yang sudah ada */ 
+    },
+
+    // MASUKKAN DI SINI (Bagian Kedua - handleDocument)
+    handleDocument: (input) => {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+            ui.showToast('File terlalu besar! Maksimal 2MB.', 'error');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            currentFile = { base64: e.target.result, type: 'file', name: file.name };
+            document.getElementById('preview-filename').innerText = file.name;
+            document.getElementById('preview-file').classList.remove('hidden');
+            document.getElementById('preview-area').classList.remove('hidden');
+            ui.showToast('Dokumen siap!', 'success');
         };
+        reader.readAsDataURL(file);
+    },
+
+    toggleRecording: async () => { /* kode yang sudah ada */ },
+
+    handleAvatarUpload: (input) => { /* kode yang sudah ada */ },
+
+    // UPDATE FUNGSI INI (Bagian Kedua - clear)
+    clear: () => {
+        currentFile = { base64: null, type: null, name: null };
+        document.getElementById('preview-area').classList.add('hidden');
+        document.getElementById('preview-img').classList.add('hidden');
+        document.getElementById('preview-audio').classList.add('hidden');
+        document.getElementById('preview-file').classList.add('hidden'); // Baris Baru
+        document.getElementById('file-image').value = '';
+        if(document.getElementById('file-doc')) document.getElementById('file-doc').value = ''; // Baris Baru
+    }
+};
+// ... kode lainnya ...
 
         const app = {
             init: async () => {
