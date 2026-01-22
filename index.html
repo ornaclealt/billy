@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secreto Wall - Ruang Pesan & Suara</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #fafafa; color: #171717; }
+        *:focus-visible { outline: 2px solid #000; outline-offset: 2px; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .bg-pattern {
+            background-color: #fafafa;
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        
+        .animate-pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Audio Player Styling */
+        audio::-webkit-media-controls-panel { background-color: #f3f4f6; }
+        
+        /* Recording Animation */
+        .recording-pulse { animation: pulse-red 1.5s infinite; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-pattern">
+
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+        <div class="max-w-xl mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="goRoot()">
+                <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white shadow-lg transform hover:rotate-6 transition">
+                    <i data-lucide="ghost" class="w-5 h-5"></i>
+                </div>
+                <span class="font-bold text-lg tracking-tight">Secreto Wall</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div id="status-indicator" class="w-2.5 h-2.5 rounded-full bg-gray-300 transition-colors duration-500" title="Status Koneksi"></div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-xl mx-auto px-4 py-8 w-full relative">
+        
+        <!-- === HALAMAN 1: LANDING === -->
+        <div id="landing-page" class="hidden flex flex-col items-center justify-center text-center py-10 fade-in">
+            <div class="w-24 h-24 bg-gradient-to-tr from-violet-600 to-fuchsia-600 rounded-3xl flex items-center justify-center text-white shadow-2xl mb-6 rotate-3">
+                <i data-lucide="venetian-mask" class="w-12 h-12"></i>
+            </div>
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-3 tracking-tight">Ruang Jujur.</h1>
+            <p class="text-gray-500 text-lg max-w-xs mx-auto mb-8 leading-relaxed">
+                Buat ruang rahasiamu. Terima pesan suara, file, dan teks secara anonim.
+            </p>
+            <button id="create-wall-btn" onclick="createMyWall()" class="group relative px-8 py-4 bg-black text-white text-base font-bold rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed">
+                <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                <span class="flex items-center gap-2">Buat Room Saya <i data-lucide="arrow-right" class="w-5 h-5"></i></span>
+            </button>
+            <p id="error-message" class="text-red-500 text-xs mt-3 hidden"></p>
+            <div id="existing-user-link" class="hidden mt-8 p-4 bg-white border border-gray-200 rounded-xl shadow-sm animate-pop">
+                <p class="text-xs font-semibold text-gray-500 mb-2">Kamu sudah punya Room!</p>
+                <button onclick="goToMyWall()" class="text-violet-600 font-bold text-sm hover:underline">Masuk ke Room Saya &rarr;</button>
+            </div>
+        </div>
+
+        <!-- === HALAMAN 2: WALL / ROOM === -->
+        <div id="wall-page" class="hidden">
+            
+            <!-- HEADER PROFIL -->
+            <div class="text-center mb-8 animate-pop relative">
+                <!-- Edit Button (Only Owner) -->
+                <button id="edit-profile-btn" onclick="openProfileModal()" class="hidden absolute top-0 right-0 bg-white border border-gray-200 p-2 rounded-full shadow-sm hover:bg-gray-50 text-gray-600 transition z-10" title="Edit Profil Room">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                </button>
+
+                <div id="profile-avatar-container" class="relative inline-block mb-4">
+                    <!-- Avatar Image -->
+                    <img id="profile-avatar-img" class="hidden w-24 h-24 rounded-full object-cover shadow-lg border-4 border-white" src="">
+                    <!-- Avatar Fallback -->
+                    <div id="profile-avatar-fallback" class="w-24 h-24 bg-gradient-to-tr from-gray-800 to-black rounded-full flex items-center justify-center text-white text-3xl font-extrabold shadow-lg border-4 border-white">?</div>
+                </div>
+                
+                <h1 class="text-2xl font-bold text-gray-900 mb-1" id="profile-title">Memuat...</h1>
+                <p class="text-gray-500 text-sm max-w-sm mx-auto mb-6 leading-relaxed" id="profile-desc">Public Wall</p>
+
+                <!-- Share Card -->
+                <div id="share-card" class="hidden bg-white p-4 rounded-xl border border-gray-200 shadow-sm max-w-sm mx-auto mb-6">
+                    <div class="flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                        <i data-lucide="link" class="w-4 h-4 text-gray-400"></i>
+                        <input type="text" id="share-link-input" readonly class="bg-transparent text-xs text-gray-700 flex-1 outline-none font-mono">
+                        <button onclick="copyLink()" class="text-gray-900 hover:bg-gray-200 p-1.5 rounded transition"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-2">Bagikan link ini agar temanmu bisa mengirim pesan!</p>
+                </div>
+            </div>
+
+            <!-- FORM KIRIM PESAN -->
+            <section id="input-section" class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8 transition-all hover:shadow-md relative">
+                
+                <!-- Editing Indicator -->
+                <div id="editing-indicator" class="hidden bg-yellow-50 px-4 py-2 border-b border-yellow-100 flex justify-between items-center">
+                    <span class="text-xs text-yellow-700 font-bold">✏️ Sedang Mengedit Pesan</span>
+                    <button onclick="cancelEdit()" class="text-yellow-600 hover:text-yellow-800"><i data-lucide="x" class="w-3 h-3"></i></button>
+                </div>
+
+                <div class="p-3 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
+                    <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">Pesan Baru</h2>
+                    <div class="text-[10px] font-bold px-2 py-1 bg-gray-900 text-white rounded">ANONIM</div>
+                </div>
+                
+                <form id="message-form" class="p-4">
+                    <input type="text" id="sender-name" placeholder="Nama samaran (Opsional)" 
+                        class="w-full text-sm font-semibold text-gray-800 placeholder-gray-300 outline-none bg-transparent border-b border-transparent focus:border-gray-100 transition-all mb-3 pb-1">
+                    
+                    <textarea id="message-text" required rows="3" placeholder="Tulis pesan, curhat, atau rahasia..." 
+                        class="w-full text-base text-gray-900 placeholder-gray-300 outline-none bg-transparent resize-none"></textarea>
+
+                    <!-- Media Previews -->
+                    <div id="media-preview-area" class="space-y-2 mt-2">
+                        <!-- Image Preview -->
+                        <div id="image-preview-container" class="hidden relative inline-block">
+                            <img id="image-preview" class="h-24 w-auto rounded-lg border border-gray-200 object-cover">
+                            <button type="button" onclick="removeFile('image')" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"><i data-lucide="x" class="w-3 h-3"></i></button>
+                        </div>
+                        <!-- Generic File Preview -->
+                        <div id="file-preview-container" class="hidden relative bg-gray-100 rounded-lg p-2 flex items-center gap-2 max-w-xs">
+                            <i data-lucide="file-text" class="w-5 h-5 text-gray-500"></i>
+                            <span id="file-name-preview" class="text-xs text-gray-700 truncate flex-1">file.pdf</span>
+                            <button type="button" onclick="removeFile('file')" class="text-gray-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        </div>
+                        <!-- Audio Preview -->
+                        <div id="audio-preview-container" class="hidden relative bg-gray-50 rounded-lg p-2 flex items-center gap-2">
+                            <audio id="audio-preview" controls class="h-8 w-full"></audio>
+                            <button type="button" onclick="removeFile('audio')" class="text-red-500 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- Toolbar -->
+                    <div class="flex justify-between items-center pt-3 mt-2 border-t border-dashed border-gray-100">
+                        <div class="flex items-center gap-1">
+                            <!-- File Attachment -->
+                            <label class="cursor-pointer text-gray-400 hover:text-violet-600 transition p-2 hover:bg-violet-50 rounded-full relative group">
+                                <i data-lucide="paperclip" class="w-5 h-5"></i>
+                                <input type="file" id="file-input" class="hidden" onchange="handleFileSelect(this)">
+                                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">File/Foto (Max 1MB)</span>
+                            </label>
+                            
+                            <!-- Voice Recorder -->
+                            <button type="button" id="record-btn" onclick="toggleRecording()" class="text-gray-400 hover:text-red-600 transition p-2 hover:bg-red-50 rounded-full relative group">
+                                <i data-lucide="mic" class="w-5 h-5"></i>
+                                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">Voice Note</span>
+                            </button>
+                            <span id="recording-status" class="hidden text-xs text-red-500 font-bold animate-pulse ml-2">Merekam...</span>
+                        </div>
+
+                        <button type="submit" id="submit-btn" class="px-5 py-2 bg-black text-white text-sm font-bold rounded-xl hover:bg-gray-800 transition shadow-lg transform active:scale-95 flex items-center gap-2">
+                            <span>Kirim</span>
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Timeline -->
+            <div class="flex items-center justify-between mb-4 px-2">
+                <h3 class="font-bold text-gray-900 text-sm">Timeline Pesan</h3>
+                <span class="text-[10px] font-bold text-gray-500 bg-white px-2 py-1 rounded border border-gray-200" id="msg-count">0</span>
+            </div>
+
+            <div id="messages-container" class="space-y-4 pb-20">
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm animate-pulse space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-gray-100 rounded-full"></div>
+                        <div class="h-3 bg-gray-100 rounded w-24"></div>
+                    </div>
+                    <div class="h-12 bg-gray-100 rounded w-full"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL EDIT PROFIL -->
+    <div id="profile-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-pop">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-gray-800">Edit Profil Room</h3>
+                <button onclick="closeProfileModal()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div class="text-center">
+                    <div class="w-20 h-20 mx-auto bg-gray-100 rounded-full overflow-hidden mb-2 border border-gray-200 relative group cursor-pointer">
+                        <img id="modal-avatar-preview" src="" class="w-full h-full object-cover hidden">
+                        <div id="modal-avatar-placeholder" class="w-full h-full flex items-center justify-center text-gray-400"><i data-lucide="camera" class="w-8 h-8"></i></div>
+                        <input type="file" id="profile-pic-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="handleProfilePic(this)">
+                    </div>
+                    <p class="text-[10px] text-gray-400">Klik untuk ganti foto</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Nama Room</label>
+                    <input type="text" id="edit-room-name" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-black outline-none" placeholder="Contoh: Ruang Curhat Budi">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Deskripsi / Bio</label>
+                    <textarea id="edit-room-desc" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-black outline-none resize-none" placeholder="Tulis sesuatu tentang room ini..."></textarea>
+                </div>
+                <button onclick="saveProfile()" class="w-full bg-black text-white py-2.5 rounded-xl font-bold text-sm hover:bg-gray-800 transition">Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="py-6 text-center text-[10px] text-gray-400 font-medium">Secreto Wall &copy; 2026</footer>
+
+    <!-- LOGIC -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp, query, where, updateDoc, arrayUnion, arrayRemove, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        // --- KONFIGURASI ---
+        let db, auth, user, appId;
+        const COLLECTION_POSTS = 'secreto_posts_v3'; 
+        const COLLECTION_PROFILES = 'secreto_profiles'; // Collection baru untuk metadata room
+
+        // State Upload Media
+        let tempFileBase64 = null;
+        let tempFileType = null; // 'image', 'audio', 'file'
+        let tempFileName = "";
+        
+        // State Voice Recording
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+
+        // State Edit
+        let isEditingId = null; // ID postingan yang sedang diedit
+
+        // --- 1. IDENTITAS & ROUTING ---
+        function getMyId() {
+            return localStorage.getItem('secreto_my_id');
+        }
+        function generateUniqueId() {
+            if (window.crypto && window.crypto.randomUUID) return 'u_' + window.crypto.randomUUID().split('-')[0];
+            return 'u_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        }
+        function setLocalId(id) { localStorage.setItem('secreto_my_id', id); }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let targetUserId = urlParams.get('u');
+        let myId = getMyId();
+        const isMyWall = (targetUserId === myId);
+
+        // --- UI ROUTING ---
+        function checkRouting() {
+            if (!targetUserId) {
+                document.getElementById('landing-page').classList.remove('hidden');
+                document.getElementById('wall-page').classList.add('hidden');
+                if (myId) document.getElementById('existing-user-link').classList.remove('hidden');
+            } else {
+                document.getElementById('landing-page').classList.add('hidden');
+                document.getElementById('wall-page').classList.remove('hidden');
+                setupWallBasicUI();
+            }
+        }
+
+        function setupWallBasicUI() {
+            const baseUrl = window.location.href.split('?')[0];
+            document.getElementById('share-link-input').value = `${baseUrl}?u=${targetUserId}`;
+            
+            if (isMyWall) {
+                document.getElementById('share-card').classList.remove('hidden');
+                document.getElementById('edit-profile-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('share-card').classList.add('hidden');
+                document.getElementById('edit-profile-btn').classList.add('hidden');
+            }
+        }
+
+        // --- 2. FIREBASE INIT ---
+        async function initSystem() {
+            checkRouting();
+            const config = (typeof __firebase_config !== 'undefined') 
+                ? JSON.parse(__firebase_config) 
+                : { /* Fallback Manual Config if needed */ apiKey: "AIzaSy...", projectId: "..." }; 
+            
+            // Re-use logic from previous artifacts if available, simplified here
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'default';
+            
+            try {
+                const app = initializeApp(config);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (currentUser) => {
+                    if (currentUser) {
+                        user = currentUser;
+                        document.getElementById('status-indicator').classList.add('bg-green-500');
+                        if (targetUserId) {
+                            loadRoomProfile(); // Load data profil room (nama, foto)
+                            setupRealtimeListener(); // Load pesan
+                        }
+                    }
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        // --- 3. PROFILE MANAGEMENT (NEW) ---
+        async function loadRoomProfile() {
+            // Ambil data profil room dari Firestore
+            const docRef = getDocRef(COLLECTION_PROFILES, targetUserId);
+            try {
+                const snap = await getDoc(docRef);
+                const titleEl = document.getElementById('profile-title');
+                const descEl = document.getElementById('profile-desc');
+                const imgEl = document.getElementById('profile-avatar-img');
+                const fallbackEl = document.getElementById('profile-avatar-fallback');
+
+                if (snap.exists()) {
+                    const data = snap.data();
+                    titleEl.innerText = data.roomName || (isMyWall ? "Wall Saya" : `Wall #${targetUserId.substr(2,4)}`);
+                    descEl.innerText = data.roomDesc || "Kirim pesan rahasia di sini.";
+                    if (data.avatarUrl) {
+                        imgEl.src = data.avatarUrl;
+                        imgEl.classList.remove('hidden');
+                        fallbackEl.classList.add('hidden');
+                    } else {
+                        imgEl.classList.add('hidden');
+                        fallbackEl.classList.remove('hidden');
+                        fallbackEl.innerText = data.roomName ? data.roomName.charAt(0).toUpperCase() : "?";
+                    }
+                } else {
+                    // Default
+                    titleEl.innerText = isMyWall ? "Wall Saya" : `Wall #${targetUserId.substr(2,4)}`;
+                    descEl.innerText = "Public Wall";
+                    fallbackEl.innerText = "?";
+                }
+            } catch(e) { console.error("Profile load err", e); }
+        }
+
+        window.openProfileModal = async () => {
+            const docRef = getDocRef(COLLECTION_PROFILES, myId);
+            const snap = await getDoc(docRef);
+            if (snap.exists()) {
+                const data = snap.data();
+                document.getElementById('edit-room-name').value = data.roomName || "";
+                document.getElementById('edit-room-desc').value = data.roomDesc || "";
+                if(data.avatarUrl) {
+                    document.getElementById('modal-avatar-preview').src = data.avatarUrl;
+                    document.getElementById('modal-avatar-preview').classList.remove('hidden');
+                    document.getElementById('modal-avatar-placeholder').classList.add('hidden');
+                }
+            }
+            document.getElementById('profile-modal').classList.remove('hidden');
+        };
+
+        window.closeProfileModal = () => document.getElementById('profile-modal').classList.add('hidden');
+
+        window.handleProfilePic = (input) => {
+            const file = input.files[0];
+            if(file && file.size < 500 * 1024) { // Max 500KB for profile
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('modal-avatar-preview').src = e.target.result;
+                    document.getElementById('modal-avatar-preview').classList.remove('hidden');
+                    document.getElementById('modal-avatar-placeholder').classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else { alert("Ukuran foto maksimal 500KB"); }
+        };
+
+        window.saveProfile = async () => {
+            const name = document.getElementById('edit-room-name').value;
+            const desc = document.getElementById('edit-room-desc').value;
+            const imgSrc = document.getElementById('modal-avatar-preview').src;
+            // Cek apakah src adalah base64 (artinya ada gambar baru)
+            const avatarUrl = imgSrc.startsWith('data:') ? imgSrc : null;
+
+            const updateData = { roomName: name, roomDesc: desc };
+            if(avatarUrl) updateData.avatarUrl = avatarUrl;
+
+            const docRef = getDocRef(COLLECTION_PROFILES, myId);
+            await setDoc(docRef, updateData, { merge: true });
+            
+            closeProfileModal();
+            loadRoomProfile(); // Refresh UI
+        };
+
+        // --- 4. MEDIA & RECORDING LOGIC ---
+        
+        // --- FILE & IMAGE ---
+        window.handleFileSelect = (input) => {
+            const file = input.files[0];
+            if (!file) return;
+            if (file.size > 1024 * 1024) { alert("File maksimal 1MB!"); return; }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                tempFileBase64 = e.target.result;
+                tempFileName = file.name;
+                
+                // Detect Type
+                if (file.type.startsWith('image/')) {
+                    tempFileType = 'image';
+                    document.getElementById('image-preview').src = tempFileBase64;
+                    document.getElementById('image-preview-container').classList.remove('hidden');
+                } else {
+                    tempFileType = 'file';
+                    document.getElementById('file-name-preview').innerText = file.name;
+                    document.getElementById('file-preview-container').classList.remove('hidden');
+                    document.getElementById('file-preview-container').classList.add('flex');
+                }
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.removeFile = (type) => {
+            tempFileBase64 = null;
+            tempFileType = null;
+            tempFileName = "";
+            document.getElementById('file-input').value = "";
+            
+            if (type === 'image') document.getElementById('image-preview-container').classList.add('hidden');
+            if (type === 'file') {
+                document.getElementById('file-preview-container').classList.add('hidden');
+                document.getElementById('file-preview-container').classList.remove('flex');
+            }
+            if (type === 'audio') {
+                document.getElementById('audio-preview-container').classList.add('hidden');
+                document.getElementById('audio-preview-container').classList.remove('flex');
+            }
+        };
+
+        // --- VOICE NOTE ---
+        window.toggleRecording = async () => {
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
+                    
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            tempFileBase64 = e.target.result;
+                            tempFileType = 'audio';
+                            tempFileName = "voice_note.webm";
+                            
+                            const audioEl = document.getElementById('audio-preview');
+                            audioEl.src = tempFileBase64;
+                            document.getElementById('audio-preview-container').classList.remove('hidden');
+                            document.getElementById('audio-preview-container').classList.add('flex');
+                        };
+                        reader.readAsDataURL(audioBlob);
+                        
+                        // Stop tracks
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    document.getElementById('record-btn').classList.add('text-red-600', 'bg-red-50');
+                    document.getElementById('recording-status').classList.remove('hidden');
+                } catch (err) {
+                    alert("Gagal akses mikrofon: " + err.message);
+                }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                document.getElementById('record-btn').classList.remove('text-red-600', 'bg-red-50');
+                document.getElementById('recording-status').classList.add('hidden');
+            }
+        };
+
+        // --- 5. CRUD MESSAGES ---
+
+        function setupRealtimeListener() {
+            const colRef = getCollectionRef(COLLECTION_POSTS);
+            const q = query(colRef, where('toUserId', '==', targetUserId));
+            
+            onSnapshot(q, (snapshot) => {
+                const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), timestamp: doc.data().timestamp?.toDate() }));
+                msgs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                renderMessages(msgs);
+                document.getElementById('msg-count').innerText = msgs.length;
+            });
+        }
+
+        function renderMessages(messages) {
+            const container = document.getElementById('messages-container');
+            container.innerHTML = '';
+            
+            if (messages.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 opacity-60"><p class="text-gray-400 text-sm">Belum ada pesan.</p></div>`;
+                return;
+            }
+
+            messages.forEach(msg => {
+                const isSender = (user && msg.senderAuthId === user.uid);
+                // Sender boleh edit/hapus, Owner boleh hapus
+                const canEdit = isSender; 
+                const canDelete = isSender || isMyWall;
+
+                const date = msg.timestamp ? new Date(msg.timestamp).toLocaleString('id-ID', { hour: '2-digit', minute:'2-digit', day:'numeric', month:'short' }) : 'Baru';
+                
+                // Vote Logic
+                const upvotes = msg.upvotes || [];
+                const downvotes = msg.downvotes || [];
+                const score = upvotes.length - downvotes.length;
+                const comments = msg.comments || [];
+
+                let mediaHtml = '';
+                if (msg.fileType === 'image') mediaHtml = `<img src="${msg.fileUrl}" class="mt-2 rounded-lg max-h-60 w-full object-cover border border-gray-100">`;
+                else if (msg.fileType === 'audio') mediaHtml = `<div class="mt-2"><audio controls src="${msg.fileUrl}" class="w-full h-10"></audio></div>`;
+                else if (msg.fileType === 'file') mediaHtml = `<a href="${msg.fileUrl}" download="${msg.fileName}" class="mt-2 flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm text-blue-600 hover:underline"><i data-lucide="file" class="w-4 h-4"></i> ${msg.fileName}</a>`;
+
+                const div = document.createElement('div');
+                div.className = 'bg-white rounded-2xl p-5 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] border border-gray-100 transition mb-4 group relative';
+                
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 uppercase">${msg.senderName.charAt(0)}</div>
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-900">${escapeHtml(msg.senderName)}</h4>
+                                <p class="text-[10px] text-gray-400">${date} ${msg.isEdited ? '(diedit)' : ''}</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-1">
+                            ${canEdit ? `<button onclick="editMessage('${msg.id}')" class="text-gray-300 hover:text-blue-500 p-1.5 transition" title="Edit"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>` : ''}
+                            ${canDelete ? `<button onclick="deleteMessage('${msg.id}')" class="text-gray-300 hover:text-red-500 p-1.5 transition" title="Hapus"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
+                        </div>
+                    </div>
+                    
+                    <p id="text-${msg.id}" class="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap font-medium">${escapeHtml(msg.text)}</p>
+                    ${mediaHtml}
+                    
+                    <div class="flex items-center gap-4 pt-3 mt-2 border-t border-gray-50">
+                        <div class="flex items-center bg-gray-50 rounded-lg border border-gray-100 h-7 overflow-hidden">
+                            <button onclick="vote('${msg.id}', 'up')" class="px-2 h-full hover:bg-gray-200 text-gray-400 ${upvotes.includes(user?.uid) ? 'text-orange-500' : ''}"><i data-lucide="arrow-big-up" class="w-4 h-4 fill-current"></i></button>
+                            <span class="text-xs font-bold w-5 text-center text-gray-600">${score}</span>
+                            <button onclick="vote('${msg.id}', 'down')" class="px-2 h-full hover:bg-gray-200 text-gray-400 ${downvotes.includes(user?.uid) ? 'text-violet-500' : ''}"><i data-lucide="arrow-big-down" class="w-4 h-4 fill-current"></i></button>
+                        </div>
+                        <button onclick="toggleComment('${msg.id}')" class="flex items-center gap-1 text-xs font-bold text-gray-400 hover:text-gray-700"><i data-lucide="message-square" class="w-4 h-4"></i> ${comments.length}</button>
+                    </div>
+
+                    <div id="comments-${msg.id}" class="hidden mt-3 bg-gray-50 p-3 rounded-xl">
+                        <div class="space-y-2 mb-2 max-h-40 overflow-y-auto hide-scroll">
+                            ${comments.map(c => `<div class="text-xs"><span class="font-bold text-gray-700">${escapeHtml(c.sender)}:</span> <span class="text-gray-600">${escapeHtml(c.text)}</span></div>`).join('')}
+                        </div>
+                        <form onsubmit="postComment(event, '${msg.id}')" class="flex gap-2"><input name="comment" placeholder="Balas..." class="flex-1 text-xs p-1.5 rounded border border-gray-200"><button type="submit" class="bg-black text-white p-1.5 rounded"><i data-lucide="send" class="w-3 h-3"></i></button></form>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        // --- ACTIONS ---
+        document.getElementById('message-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = document.getElementById('message-text').value.trim();
+            const name = document.getElementById('sender-name').value.trim() || "Anonim";
+            
+            if (!text && !tempFileBase64) return;
+
+            // Jika sedang Mode Edit
+            if (isEditingId) {
+                const docRef = getDocRef(COLLECTION_POSTS, isEditingId);
+                const updateData = { text: text, isEdited: true };
+                // Update file jika ada penggantian (opsional, disini simpel text aja utk edit)
+                await updateDoc(docRef, updateData);
+                cancelEdit();
+                return;
+            }
+
+            const payload = {
+                toUserId: targetUserId,
+                senderName: name,
+                text: text,
+                timestamp: serverTimestamp(),
+                senderAuthId: user.uid,
+                upvotes: [], downvotes: [], comments: []
+            };
+
+            if (tempFileBase64) {
+                payload.fileUrl = tempFileBase64;
+                payload.fileType = tempFileType;
+                payload.fileName = tempFileName;
+            }
+
+            try {
+                await addDoc(getCollectionRef(COLLECTION_POSTS), payload);
+                document.getElementById('message-form').reset();
+                removeFile(tempFileType); // Reset preview
+            } catch(e) { alert("Gagal kirim"); }
+        });
+
+        window.editMessage = async (id) => {
+            const docRef = getDocRef(COLLECTION_POSTS, id);
+            const snap = await getDoc(docRef);
+            if(snap.exists()) {
+                const data = snap.data();
+                if(data.senderAuthId !== user.uid) return; // Security check
+
+                document.getElementById('message-text').value = data.text;
+                document.getElementById('sender-name').value = data.senderName;
+                document.getElementById('sender-name').disabled = true; // Nama gabisa ganti saat edit
+                
+                isEditingId = id;
+                document.getElementById('editing-indicator').classList.remove('hidden');
+                document.getElementById('submit-btn').innerHTML = `<span>Simpan</span> <i data-lucide="save" class="w-4 h-4"></i>`;
+                window.scrollTo(0, document.getElementById('input-section').offsetTop);
+            }
+        };
+
+        window.cancelEdit = () => {
+            isEditingId = null;
+            document.getElementById('message-form').reset();
+            document.getElementById('sender-name').disabled = false;
+            document.getElementById('editing-indicator').classList.add('hidden');
+            document.getElementById('submit-btn').innerHTML = `<span>Kirim</span> <i data-lucide="send" class="w-4 h-4"></i>`;
+            removeFile('image'); removeFile('file'); removeFile('audio');
+        };
+
+        window.deleteMessage = async (id) => {
+            if(!confirm("Hapus pesan ini permanen?")) return;
+            await deleteDoc(getDocRef(COLLECTION_POSTS, id));
+        };
+
+        window.vote = async (id, type) => {
+            const docRef = getDocRef(COLLECTION_POSTS, id);
+            const snap = await getDoc(docRef);
+            if(!snap.exists()) return;
+            const d = snap.data();
+            const uid = user.uid;
+            let up = d.upvotes || [];
+            let down = d.downvotes || [];
+
+            if (type === 'up') {
+                up.includes(uid) ? up = up.filter(x=>x!==uid) : (up.push(uid), down = down.filter(x=>x!==uid));
+            } else {
+                down.includes(uid) ? down = down.filter(x=>x!==uid) : (down.push(uid), up = up.filter(x=>x!==uid));
+            }
+            await updateDoc(docRef, { upvotes: up, downvotes: down });
+        };
+
+        window.postComment = async (e, id) => {
+            e.preventDefault();
+            const text = e.target.comment.value.trim();
+            if(!text) return;
+            const sender = document.getElementById('sender-name').value.trim() || "Anonim";
+            await updateDoc(getDocRef(COLLECTION_POSTS, id), {
+                comments: arrayUnion({ text, sender, ts: Date.now() })
+            });
+            e.target.comment.value = "";
+        };
+
+        window.toggleComment = (id) => document.getElementById(`comments-${id}`).classList.toggle('hidden');
+
+        // Helpers
+        function getCollectionRef(name) { return collection(db, 'artifacts', appId, 'public', 'data', name); }
+        function getDocRef(name, id) { return doc(db, 'artifacts', appId, 'public', 'data', name, id); }
+        function escapeHtml(text) { return text ? text.replace(/</g, "&lt;") : ""; }
+
+        // Exports
+        window.goRoot = () => window.location.href = window.location.href.split('?')[0];
+        window.createMyWall = () => {
+            const id = generateUniqueId();
+            setLocalId(id);
+            window.location.href = `${window.location.href.split('?')[0]}?u=${id}`;
+        };
+        window.goToMyWall = () => {
+            const id = getMyId();
+            if(id) window.location.href = `${window.location.href.split('?')[0]}?u=${id}`;
+        };
+        window.copyLink = () => {
+            navigator.clipboard.writeText(document.getElementById('share-link-input').value);
+            alert("Link tersalin!");
+        };
+
+        initSystem();
+    </script>
+</body>
+</html>
