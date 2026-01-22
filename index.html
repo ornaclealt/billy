@@ -3,19 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Secreto Wall Ultimate</title>
+    <title>Secreto Wall</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Compression Lib -->
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
 
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; color: #0F172A; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; background-color: #fafafa; color: #171717; -webkit-tap-highlight-color: transparent; }
         
+        /* Secreto Style Background */
+        .bg-pattern {
+            background-color: #fafafa;
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
         /* Smooth Scroll & Hide Scrollbar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -24,204 +31,207 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-enter { animation: fadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
         
-        @keyframes pulse-ring { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        @keyframes pulse-ring { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         .recording-active { animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
 
-        /* Custom Audio Player */
-        audio { height: 36px; border-radius: 20px; width: 100%; }
-        audio::-webkit-media-controls-panel { background-color: #F1F5F9; }
+        /* Audio Player Styling */
+        audio { height: 32px; width: 100%; border-radius: 999px; }
+        audio::-webkit-media-controls-panel { background-color: #f3f4f6; }
         
         /* Mobile Optimizations */
         .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
-<body class="min-h-screen flex flex-col overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+<body class="min-h-screen flex flex-col overflow-x-hidden bg-pattern selection:bg-black selection:text-white">
 
-    <!-- TOAST NOTIFICATION (Pocok Atas) -->
+    <!-- TOAST NOTIFICATION -->
     <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-full max-w-xs px-4 pointer-events-none"></div>
 
     <!-- NAVBAR -->
-    <nav class="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-slate-200">
-        <div class="max-w-2xl mx-auto px-4 h-16 flex justify-between items-center">
+    <nav class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200">
+        <div class="max-w-xl mx-auto px-6 h-16 flex justify-between items-center">
             <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href = window.location.href.split('?')[0]">
-                <div class="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-900/20">
+                <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white shadow-lg transform hover:rotate-3 transition">
                     <i data-lucide="ghost" class="w-5 h-5"></i>
                 </div>
-                <span class="font-bold text-lg tracking-tight text-slate-900">Secreto<span class="text-indigo-600">.ID</span></span>
+                <span class="font-bold text-lg tracking-tight text-gray-900">Secreto Wall</span>
             </div>
             
-            <div class="flex items-center gap-2">
-                <div id="connection-status" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-500">
-                    <div class="w-2 h-2 rounded-full bg-slate-400"></div> Offline
-                </div>
+            <div class="flex items-center gap-3">
+                <div id="connection-status" class="w-2.5 h-2.5 rounded-full bg-gray-300 transition-colors duration-500" title="Offline"></div>
             </div>
         </div>
     </nav>
 
     <!-- CONTAINER UTAMA -->
-    <main class="flex-grow w-full max-w-2xl mx-auto px-4 py-6 relative">
+    <main class="flex-grow w-full max-w-xl mx-auto px-4 py-8 relative">
 
-        <!-- VIEW 1: LANDING PAGE (Generate Link) -->
-        <div id="view-landing" class="hidden flex flex-col items-center justify-center text-center py-12 animate-enter">
-            <div class="relative mb-8 group">
-                <div class="absolute inset-0 bg-indigo-500 rounded-full blur-2xl opacity-20 group-hover:opacity-30 transition duration-500"></div>
-                <div class="relative w-28 h-28 bg-white rounded-3xl shadow-2xl flex items-center justify-center border border-slate-100 rotate-3 group-hover:rotate-6 transition duration-300">
-                    <span class="text-6xl">🤫</span>
-                </div>
+        <!-- VIEW 1: LANDING PAGE -->
+        <div id="view-landing" class="hidden flex flex-col items-center justify-center text-center py-10 animate-enter">
+            <div class="w-24 h-24 bg-gradient-to-tr from-gray-800 to-black rounded-3xl flex items-center justify-center text-white shadow-2xl mb-6 rotate-3">
+                <i data-lucide="venetian-mask" class="w-12 h-12"></i>
             </div>
             
-            <h1 class="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight leading-tight">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight leading-tight">
                 Pesan Jujur.<br>Tanpa Nama.
             </h1>
-            <p class="text-slate-500 text-lg max-w-xs mx-auto mb-10 leading-relaxed font-medium">
-                Buat ruang rahasiamu. Terima pesan teks, foto, dan suara dari teman secara anonim.
+            <p class="text-gray-500 text-lg max-w-xs mx-auto mb-10 leading-relaxed font-medium">
+                Buat ruang rahasiamu sendiri. Biarkan teman mengirim pesan, foto, dan suara secara anonim.
             </p>
 
-            <button onclick="app.createRoom()" class="w-full max-w-xs py-4 bg-slate-900 text-white font-bold rounded-2xl shadow-xl shadow-slate-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-lg">
-                <i data-lucide="plus-circle" class="w-6 h-6"></i>
-                Buat Room Saya
+            <button onclick="app.createRoom()" class="group relative w-full max-w-xs py-4 bg-black text-white text-base font-bold rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all overflow-hidden flex items-center justify-center gap-3">
+                <span>Buat Link Saya</span>
+                <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
             </button>
 
-            <!-- Jika sudah pernah buat -->
-            <div id="resume-session-card" class="hidden mt-6 w-full max-w-xs p-4 bg-white border border-slate-200 rounded-2xl shadow-sm text-left flex items-center justify-between cursor-pointer hover:border-indigo-300 transition" onclick="app.goToMyRoom()">
+            <!-- Resume Button -->
+            <div id="resume-session-card" class="hidden mt-6 w-full max-w-xs p-4 bg-white border border-gray-200 rounded-2xl shadow-sm text-left flex items-center justify-between cursor-pointer hover:border-gray-400 transition" onclick="app.goToMyRoom()">
                 <div>
-                    <p class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-0.5">Lanjutkan</p>
-                    <p class="text-sm font-bold text-slate-800">Masuk ke Room Anda</p>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-0.5">Lanjutkan</p>
+                    <p class="text-sm font-bold text-gray-900">Masuk ke Room Anda</p>
                 </div>
-                <div class="w-8 h-8 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600">
+                <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-900">
                     <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </div>
             </div>
         </div>
 
-        <!-- VIEW 2: ROOM PAGE (Wall) -->
+        <!-- VIEW 2: ROOM PAGE -->
         <div id="view-room" class="hidden pb-24">
             
-            <!-- Room Header Info -->
-            <div class="relative bg-white rounded-3xl p-6 shadow-sm border border-slate-200 mb-6 text-center overflow-hidden">
-                <!-- Background Pattern -->
-                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+            <!-- Room Header -->
+            <div class="text-center mb-8 animate-enter relative">
                 
-                <!-- Settings Button (Owner Only) -->
-                <button id="btn-settings" onclick="ui.openModal('modal-settings')" class="hidden absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-full transition">
-                    <i data-lucide="settings" class="w-5 h-5"></i>
-                </button>
-
-                <div class="relative inline-block mb-3">
-                    <img id="room-avatar" src="https://ui-avatars.com/api/?name=Room&background=random" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg mx-auto bg-slate-100">
-                    <div id="badge-owner" class="hidden absolute -bottom-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-white">OWNER</div>
+                <!-- Avatar & Status -->
+                <div class="relative inline-block mb-4 group">
+                    <div class="p-1 bg-white rounded-full shadow-lg">
+                        <img id="room-avatar" src="" class="w-24 h-24 rounded-full object-cover bg-gray-100">
+                        <div id="room-avatar-fallback" class="hidden w-24 h-24 rounded-full bg-gradient-to-tr from-gray-700 to-black flex items-center justify-center text-white text-3xl font-bold">?</div>
+                    </div>
+                    <div id="badge-owner" class="hidden absolute bottom-1 right-1 bg-black text-white text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-white shadow-sm">OWNER</div>
                 </div>
                 
-                <h1 id="room-name" class="text-2xl font-bold text-slate-900 mb-1">Memuat Room...</h1>
-                <p id="room-desc" class="text-slate-500 text-sm mb-5 px-4">Deskripsi room akan muncul di sini.</p>
+                <h1 id="room-name" class="text-2xl font-extrabold text-gray-900 mb-2 tracking-tight">Memuat...</h1>
+                <p id="room-desc" class="text-gray-500 text-sm max-w-xs mx-auto mb-6 leading-relaxed">...</p>
 
-                <!-- Copy Link Box -->
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-1.5 flex items-center gap-2 max-w-sm mx-auto">
-                    <div class="bg-white px-3 py-1.5 rounded-lg border border-slate-100 flex-1 min-w-0">
-                        <p id="room-link-text" class="text-xs text-slate-500 truncate font-mono">...</p>
-                    </div>
-                    <button onclick="app.copyLink()" class="bg-slate-900 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-800 transition shadow-sm">
-                        Salin
+                <!-- Action Buttons (Owner) -->
+                <div id="owner-actions" class="hidden flex justify-center gap-3 mb-6">
+                    <button onclick="ui.openModal('modal-settings')" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition shadow-sm">
+                        <i data-lucide="settings" class="w-4 h-4"></i> Edit Room
+                    </button>
+                    <button onclick="app.copyLink()" class="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-xl text-xs font-bold hover:bg-gray-800 transition shadow-lg shadow-gray-200">
+                        <i data-lucide="copy" class="w-4 h-4"></i> Salin Link
+                    </button>
+                </div>
+
+                <!-- Action Button (Visitor) -->
+                <div id="visitor-actions" class="hidden flex justify-center mb-6">
+                    <button onclick="app.copyLink()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-900 transition shadow-sm">
+                        <i data-lucide="share-2" class="w-4 h-4"></i> Share Link Ini
                     </button>
                 </div>
             </div>
 
-            <!-- Input Box -->
-            <div id="input-container" class="bg-white rounded-3xl shadow-lg shadow-indigo-500/5 border border-indigo-100 p-1 mb-8 sticky top-20 z-30 transition-all duration-300">
+            <!-- Input Form -->
+            <section class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8 transition-all hover:shadow-md relative z-10">
+                <div class="p-3 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
+                    <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider pl-1">Kirim Pesan</h2>
+                    <div class="text-[10px] font-bold px-2 py-1 bg-gray-900 text-white rounded">ANONIM</div>
+                </div>
+                
                 <div class="p-4">
-                    <!-- Sender Name -->
-                    <input type="text" id="input-sender" placeholder="Nama Samaran (Opsional)" class="block w-full text-sm font-semibold text-slate-800 placeholder-slate-400 border-none focus:ring-0 p-0 mb-2 bg-transparent">
+                    <input type="text" id="input-sender" placeholder="Nama samaran (Opsional)" class="block w-full text-sm font-semibold text-gray-800 placeholder-gray-400 border-none focus:ring-0 p-0 mb-3 bg-transparent">
                     
-                    <!-- Message Body -->
-                    <textarea id="input-message" rows="2" placeholder="Kirim pesan rahasia..." class="block w-full text-base text-slate-900 placeholder-slate-400 border-none focus:ring-0 p-0 bg-transparent resize-none"></textarea>
+                    <textarea id="input-message" rows="3" placeholder="Tulis pesan rahasia di sini..." class="block w-full text-base text-gray-900 placeholder-gray-400 border-none focus:ring-0 p-0 bg-transparent resize-none"></textarea>
 
-                    <!-- Preview Area -->
-                    <div id="preview-area" class="hidden mt-3 p-2 bg-slate-50 rounded-xl border border-slate-200 relative group">
-                        <!-- Image Preview -->
-                        <img id="preview-img" class="hidden h-20 w-auto rounded-lg object-cover border border-slate-200">
-                        <!-- Audio Preview -->
-                        <audio id="preview-audio" controls class="hidden w-full"></audio>
-                        <!-- File Preview -->
-                        <div id="preview-file" class="hidden flex items-center gap-2 text-sm text-slate-600">
-                            <i data-lucide="file-text" class="w-4 h-4"></i> <span id="preview-filename" class="truncate max-w-[200px]">file.pdf</span>
+                    <!-- Previews -->
+                    <div id="preview-area" class="hidden mt-3 p-3 bg-gray-50 rounded-xl border border-gray-100 relative">
+                        <img id="preview-img" class="hidden h-24 w-auto rounded-lg object-cover border border-gray-200 shadow-sm">
+                        <audio id="preview-audio" controls class="hidden"></audio>
+                        <div id="preview-file" class="hidden flex items-center gap-2 text-sm text-gray-600 bg-white p-2 rounded-lg border border-gray-200">
+                            <i data-lucide="file-text" class="w-4 h-4"></i> <span id="preview-filename" class="truncate max-w-[150px]">file.pdf</span>
                         </div>
-                        <!-- Remove Button -->
                         <button onclick="media.clear()" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition"><i data-lucide="x" class="w-3 h-3"></i></button>
                     </div>
-                </div>
+                    
+                    <div class="flex justify-between items-center pt-3 mt-2 border-t border-dashed border-gray-100">
+                        <div class="flex items-center gap-1">
+                            <label class="cursor-pointer text-gray-400 hover:text-gray-900 transition p-2 hover:bg-gray-100 rounded-full" title="Upload Gambar">
+                                <i data-lucide="image" class="w-5 h-5"></i>
+                                <input type="file" id="file-image" accept="image/*" class="hidden" onchange="media.handleImage(this)">
+                            </label>
+                            
+                            <button id="btn-record" onclick="media.toggleRecording()" class="text-gray-400 hover:text-red-600 transition p-2 hover:bg-red-50 rounded-full flex items-center gap-2">
+                                <i data-lucide="mic" class="w-5 h-5"></i>
+                                <span id="recording-timer" class="hidden text-xs font-mono font-bold text-red-600 animate-pulse">00:00</span>
+                            </button>
+                        </div>
 
-                <!-- Toolbar -->
-                <div class="bg-slate-50 rounded-2xl px-4 py-2.5 flex justify-between items-center border-t border-slate-100">
-                    <div class="flex items-center gap-1">
-                        <!-- Upload Image -->
-                        <label class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full cursor-pointer transition relative group">
-                            <i data-lucide="image" class="w-5 h-5"></i>
-                            <input type="file" id="file-image" accept="image/*" class="hidden" onchange="media.handleImage(this)">
-                        </label>
-                        <!-- Voice Note -->
-                        <button id="btn-record" onclick="media.toggleRecording()" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition relative">
-                            <i data-lucide="mic" class="w-5 h-5"></i>
+                        <button onclick="app.sendMessage()" id="btn-send" class="px-5 py-2 bg-black text-white text-sm font-bold rounded-xl hover:bg-gray-800 transition shadow-lg transform active:scale-95 flex items-center gap-2">
+                            <span>Kirim</span> <i data-lucide="send" class="w-4 h-4"></i>
                         </button>
-                        <span id="recording-timer" class="hidden text-xs font-mono font-bold text-red-500 ml-2 animate-pulse">00:00</span>
                     </div>
-
-                    <button onclick="app.sendMessage()" id="btn-send" class="bg-indigo-600 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 hover:scale-105 active:scale-95 transition flex items-center gap-2">
-                        Kirim <i data-lucide="send" class="w-4 h-4"></i>
-                    </button>
                 </div>
-            </div>
+            </section>
 
-            <!-- Feed Filter -->
+            <!-- Timeline Header -->
             <div class="flex items-center justify-between px-2 mb-4">
-                <h3 class="font-bold text-slate-800 text-lg">Timeline</h3>
-                <div class="text-xs font-medium text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">
-                    <span id="msg-count">0</span> Pesan
-                </div>
+                <h3 class="font-bold text-gray-900 text-sm flex items-center gap-2">
+                    <i data-lucide="inbox" class="w-4 h-4"></i> Timeline
+                </h3>
+                <span id="msg-count" class="text-[10px] font-bold text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">0</span>
             </div>
 
-            <!-- Messages List -->
+            <!-- Feed -->
             <div id="feed-container" class="space-y-4 min-h-[200px]">
-                <!-- Skeleton Loader -->
-                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm animate-pulse space-y-3">
+                <!-- Skeleton -->
+                <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm animate-pulse space-y-3">
                     <div class="flex gap-3">
-                        <div class="w-10 h-10 bg-slate-200 rounded-full"></div>
-                        <div class="w-32 h-4 bg-slate-200 rounded mt-2"></div>
+                        <div class="w-8 h-8 bg-gray-100 rounded-full"></div>
+                        <div class="w-24 h-3 bg-gray-100 rounded mt-2"></div>
                     </div>
-                    <div class="w-full h-16 bg-slate-200 rounded-xl"></div>
+                    <div class="w-full h-12 bg-gray-100 rounded-xl"></div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- MODAL SETTINGS (Owner Only) -->
-    <div id="modal-settings" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-enter">
-        <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden mb-safe-bottom">
-            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="font-bold text-slate-800 text-lg">Edit Profil Room</h3>
-                <button onclick="ui.closeModal('modal-settings')" class="p-1 bg-slate-200 rounded-full hover:bg-slate-300 text-slate-600 transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <!-- MODAL EDIT PROFILE (Clean Design) -->
+    <div id="modal-settings" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-enter">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden transform scale-100 transition-all">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/80">
+                <h3 class="font-bold text-gray-900">Edit Profil Room</h3>
+                <button onclick="ui.closeModal('modal-settings')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <div class="p-6 space-y-5">
+            
+            <div class="p-5 space-y-5">
+                <!-- Avatar Upload -->
                 <div class="flex flex-col items-center">
                     <div class="relative w-24 h-24 group cursor-pointer">
-                        <img id="edit-avatar-preview" src="" class="w-full h-full rounded-full object-cover border-4 border-slate-100 shadow-sm">
-                        <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white">
+                        <img id="edit-avatar-preview" src="" class="w-full h-full rounded-full object-cover border-4 border-gray-100 shadow-sm">
+                        <div id="edit-avatar-placeholder" class="absolute inset-0 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 border-4 border-white hidden">
+                            <i data-lucide="image" class="w-8 h-8"></i>
+                        </div>
+                        <div class="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white">
                             <i data-lucide="camera" class="w-8 h-8"></i>
                         </div>
                         <input type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="media.handleAvatarUpload(this)">
                     </div>
-                    <p class="text-[10px] text-slate-400 mt-2 font-medium">Ketuk untuk ganti foto</p>
+                    <p class="text-[10px] text-gray-400 mt-2 font-medium">Ketuk foto untuk mengganti</p>
                 </div>
                 
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">Nama Room</label>
-                    <input type="text" id="edit-name" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none transition" placeholder="Contoh: Curhat Dong">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">Deskripsi</label>
-                    <textarea id="edit-desc" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition resize-none" placeholder="Tulis aturan main di room ini..."></textarea>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nama Room</label>
+                        <input type="text" id="edit-name" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-semibold focus:border-black focus:bg-white outline-none transition" placeholder="Contoh: Ruang Curhat Budi">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Deskripsi</label>
+                        <textarea id="edit-desc" rows="3" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:border-black focus:bg-white outline-none transition resize-none" placeholder="Tulis sesuatu..."></textarea>
+                    </div>
                 </div>
                 
-                <button onclick="app.saveProfile()" class="w-full py-3.5 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 transition">
+                <button onclick="app.saveProfile()" class="w-full py-3 bg-black text-white font-bold rounded-xl shadow-lg hover:bg-gray-800 transition active:scale-95">
                     Simpan Perubahan
                 </button>
             </div>
@@ -234,7 +244,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp, query, where, updateDoc, arrayUnion, arrayRemove, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-        // --- CONFIG FIREBASE ANDA (DIJAMIN CONNECT) ---
         const firebaseConfig = {
             apiKey: "AIzaSyApD7dueaFuPv9hHGajcwo17LADEVriqRw",
             authDomain: "entry-6a64d.firebaseapp.com",
@@ -245,24 +254,20 @@
             measurementId: "G-RPTFXQK08B"
         };
 
-        // --- GLOBAL VARIABLES ---
         let db, auth, user;
         let currentRoomId = null;
         let isOwner = false;
         
-        // Media State
         let currentFile = { base64: null, type: null, name: null };
         let recorder = null, audioChunks = [], recordStartTime = 0, recordInterval = null;
 
-        // --- SERVICES ---
         const ui = {
             showToast: (msg, type = 'info') => {
                 const el = document.createElement('div');
-                const colors = type === 'error' ? 'bg-red-500' : (type === 'success' ? 'bg-green-500' : 'bg-slate-800');
+                const colors = type === 'error' ? 'bg-red-500' : (type === 'success' ? 'bg-green-600' : 'bg-gray-900');
                 el.className = `${colors} text-white text-xs font-bold px-4 py-3 rounded-xl shadow-xl transform transition-all duration-300 translate-y-[-20px] opacity-0 flex items-center gap-2 pointer-events-auto`;
                 el.innerHTML = `<span>${msg}</span>`;
                 document.getElementById('toast-container').appendChild(el);
-                
                 requestAnimationFrame(() => el.classList.remove('translate-y-[-20px]', 'opacity-0'));
                 setTimeout(() => {
                     el.classList.add('translate-y-[-20px]', 'opacity-0');
@@ -271,14 +276,7 @@
             },
             updateStatus: (isOnline) => {
                 const el = document.getElementById('connection-status');
-                if (isOnline) {
-                    el.innerHTML = `<div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> Online`;
-                    el.classList.replace('text-slate-500', 'text-green-700');
-                    el.classList.replace('bg-slate-100', 'bg-green-50');
-                    el.classList.replace('border-slate-200', 'border-green-200');
-                } else {
-                    el.innerHTML = `<div class="w-2 h-2 rounded-full bg-red-500"></div> Offline`;
-                }
+                el.className = isOnline ? "w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "w-2.5 h-2.5 rounded-full bg-red-500";
             },
             switchView: (viewId) => {
                 ['view-landing', 'view-room'].forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -293,36 +291,29 @@
             handleImage: async (input) => {
                 const file = input.files[0];
                 if (!file) return;
-                
                 try {
-                    ui.showToast('Mengompres gambar...', 'info');
+                    ui.showToast('Memproses gambar...', 'info');
                     const options = { maxSizeMB: 0.5, maxWidthOrHeight: 1024, useWebWorker: true };
                     const compressedFile = await imageCompression(file, options);
-                    
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         currentFile = { base64: e.target.result, type: 'image', name: file.name };
                         document.getElementById('preview-img').src = e.target.result;
                         document.getElementById('preview-img').classList.remove('hidden');
                         document.getElementById('preview-area').classList.remove('hidden');
-                        ui.showToast('Foto siap dikirim', 'success');
+                        ui.showToast('Foto siap!', 'success');
                     };
                     reader.readAsDataURL(compressedFile);
-                } catch (e) {
-                    ui.showToast('Gagal proses gambar: ' + e.message, 'error');
-                }
+                } catch (e) { ui.showToast('Gagal proses: ' + e.message, 'error'); }
             },
-            
             toggleRecording: async () => {
                 const btn = document.getElementById('btn-record');
                 const timer = document.getElementById('recording-timer');
-                
                 if (!recorder || recorder.state === 'inactive') {
                     try {
                         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                         recorder = new MediaRecorder(stream);
                         audioChunks = [];
-                        
                         recorder.ondataavailable = e => audioChunks.push(e.data);
                         recorder.onstop = () => {
                             const blob = new Blob(audioChunks, { type: 'audio/webm' });
@@ -338,11 +329,10 @@
                             stream.getTracks().forEach(t => t.stop());
                             clearInterval(recordInterval);
                             timer.classList.add('hidden');
-                            btn.classList.remove('bg-red-500', 'text-white', 'recording-active');
+                            btn.classList.remove('text-red-600', 'bg-red-50', 'recording-active');
                         };
-
                         recorder.start();
-                        btn.classList.add('bg-red-500', 'text-white', 'recording-active');
+                        btn.classList.add('text-red-600', 'bg-red-50', 'recording-active');
                         timer.classList.remove('hidden');
                         recordStartTime = Date.now();
                         recordInterval = setInterval(() => {
@@ -351,15 +341,9 @@
                             const s = (diff % 60).toString().padStart(2, '0');
                             timer.innerText = `${m}:${s}`;
                         }, 1000);
-                        
-                    } catch (e) {
-                        ui.showToast('Butuh izin mikrofon!', 'error');
-                    }
-                } else {
-                    recorder.stop();
-                }
+                    } catch (e) { ui.showToast('Butuh izin mikrofon!', 'error'); }
+                } else { recorder.stop(); }
             },
-
             handleAvatarUpload: (input) => {
                 const file = input.files[0];
                 if(file) {
@@ -368,7 +352,6 @@
                     reader.readAsDataURL(file);
                 }
             },
-
             clear: () => {
                 currentFile = { base64: null, type: null, name: null };
                 document.getElementById('preview-area').classList.add('hidden');
@@ -384,9 +367,7 @@
                     const firebaseApp = initializeApp(firebaseConfig);
                     auth = getAuth(firebaseApp);
                     db = getFirestore(firebaseApp);
-                    
                     await signInAnonymously(auth);
-                    
                     onAuthStateChanged(auth, (u) => {
                         if (u) {
                             user = u;
@@ -394,18 +375,12 @@
                             app.handleRouting();
                         }
                     });
-                } catch (e) {
-                    console.error(e);
-                    ui.showToast('Gagal koneksi server: ' + e.message, 'error');
-                    ui.updateStatus(false);
-                }
+                } catch (e) { console.error(e); ui.updateStatus(false); }
             },
-
             handleRouting: () => {
                 const params = new URLSearchParams(window.location.search);
                 currentRoomId = params.get('u');
                 const mySavedId = localStorage.getItem('secreto_id');
-
                 if (!currentRoomId) {
                     ui.switchView('view-landing');
                     if (mySavedId) document.getElementById('resume-session-card').classList.remove('hidden');
@@ -416,175 +391,118 @@
                     app.listenMessages();
                 }
             },
-
             createRoom: () => {
                 const newId = 'room_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
                 localStorage.setItem('secreto_id', newId);
                 window.location.href = `?u=${newId}`;
             },
-
             goToMyRoom: () => {
                 const id = localStorage.getItem('secreto_id');
                 if (id) window.location.href = `?u=${id}`;
             },
-
             copyLink: () => {
-                const url = window.location.href;
-                navigator.clipboard.writeText(url);
-                ui.showToast('Link tersalin! Sebarkan ke teman.', 'success');
+                navigator.clipboard.writeText(window.location.href);
+                ui.showToast('Link tersalin!', 'success');
             },
-
             loadRoomData: async () => {
-                // Setup default UI state
-                document.getElementById('room-link-text').innerText = window.location.href;
-                
-                if (isOwner) {
-                    document.getElementById('btn-settings').classList.remove('hidden');
-                    document.getElementById('badge-owner').classList.remove('hidden');
-                }
+                if (isOwner) document.getElementById('owner-actions').classList.remove('hidden');
+                else document.getElementById('visitor-actions').classList.remove('hidden');
 
-                // Fetch Profile
                 const docRef = doc(db, 'secreto_profiles', currentRoomId);
                 const snap = await getDoc(docRef);
-                
+                const imgEl = document.getElementById('room-avatar');
+                const fbEl = document.getElementById('room-avatar-fallback');
+
                 if (snap.exists()) {
                     const data = snap.data();
                     document.getElementById('room-name').innerText = data.name || "Room Tanpa Nama";
                     document.getElementById('room-desc').innerText = data.desc || "Kirim pesan rahasia di sini.";
-                    document.getElementById('room-avatar').src = data.avatar || `https://ui-avatars.com/api/?name=${data.name || 'Room'}`;
-                    
-                    // Pre-fill modal
+                    if(data.avatar) {
+                        imgEl.src = data.avatar;
+                        imgEl.classList.remove('hidden');
+                        fbEl.classList.add('hidden');
+                        document.getElementById('edit-avatar-preview').src = data.avatar;
+                    } else {
+                        imgEl.classList.add('hidden');
+                        fbEl.classList.remove('hidden');
+                        fbEl.innerText = data.name ? data.name.charAt(0).toUpperCase() : "?";
+                    }
                     document.getElementById('edit-name').value = data.name || "";
                     document.getElementById('edit-desc').value = data.desc || "";
-                    document.getElementById('edit-avatar-preview').src = data.avatar || "";
                 } else {
                     document.getElementById('room-name').innerText = isOwner ? "Room Anda" : "Rahasia Room";
+                    imgEl.classList.add('hidden');
+                    fbEl.classList.remove('hidden');
+                    fbEl.innerText = "?";
                 }
+                if (isOwner) document.getElementById('badge-owner').classList.remove('hidden');
             },
-
             saveProfile: async () => {
                 if (!isOwner) return;
-                ui.showToast('Menyimpan profil...', 'info');
-                
+                ui.showToast('Menyimpan...', 'info');
                 const name = document.getElementById('edit-name').value;
                 const desc = document.getElementById('edit-desc').value;
                 const avatarSrc = document.getElementById('edit-avatar-preview').src;
-                
-                // Jika avatar adalah base64 (baru diupload), simpan. Jika URL lama, biarkan.
                 const data = { name, desc };
-                if (avatarSrc.startsWith('data:')) {
-                    // Compress avatar juga idealnya, tapi kita pakai raw dlu
-                    data.avatar = avatarSrc; 
-                }
-
+                if (avatarSrc.startsWith('data:')) data.avatar = avatarSrc; 
                 try {
                     await setDoc(doc(db, 'secreto_profiles', currentRoomId), data, { merge: true });
                     ui.closeModal('modal-settings');
                     ui.showToast('Profil diperbarui!', 'success');
                     app.loadRoomData();
-                } catch(e) {
-                    ui.showToast('Gagal simpan: ' + e.message, 'error');
-                }
+                } catch(e) { ui.showToast('Gagal simpan', 'error'); }
             },
-
             sendMessage: async () => {
                 const sender = document.getElementById('input-sender').value.trim() || 'Anonim';
                 const text = document.getElementById('input-message').value.trim();
                 const btn = document.getElementById('btn-send');
-
-                if (!text && !currentFile.base64) {
-                    ui.showToast('Tulis pesan atau lampirkan file!', 'error');
-                    return;
-                }
-
+                if (!text && !currentFile.base64) { ui.showToast('Tulis pesan dulu!', 'error'); return; }
                 btn.disabled = true;
                 btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin w-4 h-4"></i>`;
                 lucide.createIcons();
-
                 try {
                     await addDoc(collection(db, 'secreto_messages'), {
-                        roomId: currentRoomId,
-                        sender: sender,
-                        text: text,
-                        file: currentFile.base64 ? currentFile : null,
-                        timestamp: serverTimestamp(),
-                        senderUid: user.uid, // Untuk izin edit/hapus
-                        likes: [],
-                        comments: []
+                        roomId: currentRoomId, sender, text, file: currentFile.base64 ? currentFile : null,
+                        timestamp: serverTimestamp(), senderUid: user.uid
                     });
-
-                    // Reset Form
                     document.getElementById('input-message').value = '';
                     media.clear();
-                    ui.showToast('Pesan terkirim!', 'success');
-                } catch(e) {
-                    ui.showToast('Gagal kirim: ' + e.message, 'error');
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = `Kirim <i data-lucide="send" class="w-4 h-4"></i>`;
-                    lucide.createIcons();
-                }
+                    ui.showToast('Terkirim!', 'success');
+                } catch(e) { ui.showToast('Gagal kirim', 'error'); } 
+                finally { btn.disabled = false; btn.innerHTML = `Kirim <i data-lucide="send" class="w-4 h-4"></i>`; lucide.createIcons(); }
             },
-
             listenMessages: () => {
                 const q = query(collection(db, 'secreto_messages'), where('roomId', '==', currentRoomId));
-                
                 onSnapshot(q, (snapshot) => {
                     const msgs = snapshot.docs.map(d => ({ id: d.id, ...d.data(), ts: d.data().timestamp?.toDate() }));
-                    msgs.sort((a, b) => (b.ts || 0) - (a.ts || 0)); // Sort JS client-side biar gak perlu index
-                    
+                    msgs.sort((a, b) => (b.ts || 0) - (a.ts || 0));
                     document.getElementById('msg-count').innerText = msgs.length;
                     const container = document.getElementById('feed-container');
                     container.innerHTML = '';
-
                     if (msgs.length === 0) {
-                        container.innerHTML = `
-                            <div class="text-center py-10 opacity-50">
-                                <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-2 text-slate-300"></i>
-                                <p class="text-sm font-medium text-slate-400">Belum ada pesan rahasia.</p>
-                            </div>
-                        `;
+                        container.innerHTML = `<div class="text-center py-10 opacity-50"><i data-lucide="inbox" class="w-12 h-12 mx-auto mb-2 text-gray-300"></i><p class="text-sm font-medium text-gray-400">Belum ada pesan.</p></div>`;
                         lucide.createIcons();
                         return;
                     }
-
                     msgs.forEach(msg => {
-                        // Logic hak akses
-                        const isMyMessage = (user && msg.senderUid === user.uid);
-                        const canDelete = isOwner || isMyMessage;
-                        
-                        // Time
+                        const canDelete = isOwner || (user && msg.senderUid === user.uid);
                         const time = msg.ts ? msg.ts.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...';
-                        
-                        // Media render
                         let mediaHtml = '';
                         if (msg.file) {
-                            if (msg.file.type === 'image') mediaHtml = `<img src="${msg.file.base64}" class="mt-3 rounded-lg w-full max-h-80 object-cover border border-slate-100">`;
+                            if (msg.file.type === 'image') mediaHtml = `<img src="${msg.file.base64}" class="mt-3 rounded-lg w-full max-h-80 object-cover border border-gray-100">`;
                             else if (msg.file.type === 'audio') mediaHtml = `<div class="mt-3"><audio controls src="${msg.file.base64}"></audio></div>`;
                         }
-
                         const el = document.createElement('div');
-                        el.className = "bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-4 transition hover:shadow-md";
+                        el.className = "bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4 transition hover:shadow-md";
                         el.innerHTML = `
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex items-center gap-2.5">
-                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-xs font-bold text-indigo-600 uppercase">
-                                        ${msg.sender.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <h4 class="text-sm font-bold text-slate-900">${escapeHtml(msg.sender)}</h4>
-                                        <p class="text-[10px] text-slate-400 font-medium">${time}</p>
-                                    </div>
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 uppercase">${msg.sender.charAt(0)}</div>
+                                    <div><h4 class="text-sm font-bold text-gray-900">${escapeHtml(msg.sender)}</h4><p class="text-[10px] text-gray-400 font-medium">${time}</p></div>
                                 </div>
-                                ${canDelete ? `
-                                    <button onclick="window.deleteMessage('${msg.id}')" class="text-slate-300 hover:text-red-500 p-1.5 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                ` : ''}
+                                ${canDelete ? `<button onclick="window.deleteMessage('${msg.id}')" class="text-gray-300 hover:text-red-500 p-1.5 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
                             </div>
-                            
-                            <div class="pl-11">
-                                <p class="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">${escapeHtml(msg.text)}</p>
-                                ${mediaHtml}
-                            </div>
+                            <div class="pl-11"><p class="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">${escapeHtml(msg.text)}</p>${mediaHtml}</div>
                         `;
                         container.appendChild(el);
                     });
@@ -593,26 +511,13 @@
             }
         };
 
-        // --- GLOBAL EXPORTS (Agar bisa dipanggil dari HTML) ---
-        window.app = app;
-        window.ui = ui;
-        window.media = media;
-        
+        window.app = app; window.ui = ui; window.media = media;
         window.deleteMessage = async (id) => {
-            if(!confirm("Hapus pesan ini selamanya?")) return;
-            try {
-                await deleteDoc(doc(db, 'secreto_messages', id));
-                ui.showToast('Pesan dihapus', 'info');
-            } catch(e) {
-                ui.showToast('Gagal hapus', 'error');
-            }
+            if(!confirm("Hapus pesan ini?")) return;
+            try { await deleteDoc(doc(db, 'secreto_messages', id)); ui.showToast('Pesan dihapus', 'info'); } catch(e) { ui.showToast('Gagal hapus', 'error'); }
         };
-
         function escapeHtml(text) { return text ? text.replace(/</g, "&lt;") : ""; }
-
-        // Start App
         app.init();
-
     </script>
 </body>
 </html>
