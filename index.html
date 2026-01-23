@@ -26,11 +26,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Memberikan jeda animasi untuk tiap elemen (looping otomatis di JS nanti) */
-        #feed-container > div:nth-child(1) { animation-delay: 0.1s; }
-        #feed-container > div:nth-child(2) { animation-delay: 0.15s; }
-        #feed-container > div:nth-child(3) { animation-delay: 0.2s; }
-                
         /* Secreto Style Background */
         .bg-pattern {
             background-color: #fafafa;
@@ -171,6 +166,11 @@
                     
                     <div class="flex justify-between items-center pt-3 mt-2 border-t border-dashed border-gray-100">
                         <div class="flex items-center gap-1">
+                            <label class="cursor-pointer text-gray-400 hover:text-gray-900 transition p-2 hover:bg-gray-100 rounded-full" title="Upload Foto">
+                                <i data-lucide="image" class="w-5 h-5"></i>
+                                <input type="file" id="file-image" accept="image/*" class="hidden" onchange="media.handleImage(this)">
+                            </label>
+                            
                             <label class="cursor-pointer text-gray-400 hover:text-gray-900 transition p-2 hover:bg-gray-100 rounded-full" title="Upload Dokumen">
                               <i data-lucide="file-plus" class="w-5 h-5"></i>
                                 <input type="file" id="file-doc" accept=".pdf,.doc,.docx,.txt" class="hidden" onchange="media.handleDocument(this)">
@@ -191,42 +191,50 @@
 
             <!-- Timeline Header -->
             <div class="px-2 mb-6 space-y-4 animate-enter">
-    <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-            <div class="p-1.5 bg-black text-white rounded-lg shadow-sm">
-                <i data-lucide="layout-list" class="w-4 h-4"></i>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="p-1.5 bg-black text-white rounded-lg shadow-sm">
+                            <i data-lucide="layout-list" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="font-bold text-gray-900 text-sm tracking-tight">Timeline Pesan</h3>
+                    </div>
+                    <div class="flex items-center gap-1.5 bg-white border border-gray-100 px-3 py-1 rounded-full shadow-sm">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <span id="msg-count" class="text-[11px] font-black text-gray-700">0</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-12 gap-2">
+                    <div class="col-span-8 relative group">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black group-focus-within:scale-110 transition-all duration-300"></i>
+                        <input type="text" id="search-input" oninput="app.listenMessages()" placeholder="Cari kata kunci..." 
+                            class="w-full pl-10 pr-4 py-2.5 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-2xl text-xs font-medium placeholder:text-gray-400 focus:bg-white focus:border-black focus:ring-4 focus:ring-black/5 outline-none transition-all duration-300 shadow-sm">
+                    </div>
+                    
+                    <div class="col-span-4 relative">
+                        <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                        <select id="sort-select" onchange="app.listenMessages()" 
+                            class="w-full appearance-none bg-white/60 backdrop-blur-sm border border-gray-200 rounded-2xl pl-4 pr-10 py-2.5 text-xs font-bold text-gray-700 focus:bg-white focus:border-black outline-none transition-all duration-300 shadow-sm cursor-pointer">
+                            <option value="newest">Terbaru</option>
+                            <option value="oldest">Terlama</option>
+                            <option value="popular">Populer</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-            <h3 class="font-bold text-gray-900 text-sm tracking-tight">Timeline Pesan</h3>
-        </div>
-        <div class="flex items-center gap-1.5 bg-white border border-gray-100 px-3 py-1 rounded-full shadow-sm">
-            <span class="relative flex h-2 w-2">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-            </span>
-            <span id="msg-count" class="text-[11px] font-black text-gray-700">0</span>
-        </div>
-    </div>
+            
+            <!-- Feed Container -->
+            <div id="feed-container" class="space-y-4 pb-10">
+                <!-- Messages will load here -->
+            </div>
 
-    <div class="grid grid-cols-12 gap-2">
-        <div class="col-span-8 relative group">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black group-focus-within:scale-110 transition-all duration-300"></i>
-            <input type="text" id="search-input" oninput="app.listenMessages()" placeholder="Cari kata kunci..." 
-                class="w-full pl-10 pr-4 py-2.5 bg-white/60 backdrop-blur-sm border border-gray-200 rounded-2xl text-xs font-medium placeholder:text-gray-400 focus:bg-white focus:border-black focus:ring-4 focus:ring-black/5 outline-none transition-all duration-300 shadow-sm">
         </div>
-        
-        <div class="col-span-4 relative">
-            <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
-            <select id="sort-select" onchange="app.listenMessages()" 
-                class="w-full appearance-none bg-white/60 backdrop-blur-sm border border-gray-200 rounded-2xl pl-4 pr-10 py-2.5 text-xs font-bold text-gray-700 focus:bg-white focus:border-black outline-none transition-all duration-300 shadow-sm cursor-pointer">
-                <option value="newest">Terbaru</option>
-                <option value="oldest">Terlama</option>
-                <option value="popular">Populer</option>
-            </select>
-        </div>
-    </div>
-</div>
+    </main>
 
-    <!-- MODAL EDIT PROFILE (Clean Design) -->
+    <!-- MODAL EDIT PROFILE -->
     <div id="modal-settings" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-enter">
         <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden transform scale-100 transition-all">
             <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/80">
@@ -271,8 +279,8 @@
     <!-- LOGIC SYSTEM -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp, query, where, updateDoc, arrayUnion, arrayRemove, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp, query, where, updateDoc, arrayUnion, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyApD7dueaFuPv9hHGajcwo17LADEVriqRw",
@@ -306,7 +314,7 @@
             },
             updateStatus: (isOnline) => {
                 const el = document.getElementById('connection-status');
-                el.className = isOnline ? "w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "w-2.5 h-2.5 rounded-full bg-red-500";
+                if(el) el.className = isOnline ? "w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "w-2.5 h-2.5 rounded-full bg-red-500";
             },
             switchView: (viewId) => {
                 ['view-landing', 'view-room'].forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -317,47 +325,92 @@
             closeModal: (id) => document.getElementById(id).classList.add('hidden')
         };
 
-        // ... kode lainnya ...
-      const media = {
-    handleImage: async (input) => { 
-        /* kode yang sudah ada */ 
-    },
-
-    // MASUKKAN DI SINI (Bagian Kedua - handleDocument)
-    handleDocument: (input) => {
-        const file = input.files[0];
-        if (!file) return;
-        if (file.size > 2 * 1024 * 1024) {
-            ui.showToast('File terlalu besar! Maksimal 2MB.', 'error');
-            return;
-        }
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            currentFile = { base64: e.target.result, type: 'file', name: file.name };
-            document.getElementById('preview-filename').innerText = file.name;
-            document.getElementById('preview-file').classList.remove('hidden');
-            document.getElementById('preview-area').classList.remove('hidden');
-            ui.showToast('Dokumen siap!', 'success');
+        const media = {
+            handleImage: async (input) => {
+                const file = input.files[0];
+                if (!file) return;
+                try {
+                    const compressedFile = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1024 });
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        currentFile = { base64: e.target.result, type: 'image', name: file.name };
+                        document.getElementById('preview-img').src = e.target.result;
+                        document.getElementById('preview-img').classList.remove('hidden');
+                        document.getElementById('preview-area').classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(compressedFile);
+                } catch (error) { ui.showToast('Gagal proses gambar', 'error'); }
+            },
+            handleDocument: (input) => {
+                const file = input.files[0];
+                if (!file) return;
+                if (file.size > 2 * 1024 * 1024) { ui.showToast('File max 2MB', 'error'); return; }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentFile = { base64: e.target.result, type: 'file', name: file.name };
+                    document.getElementById('preview-filename').innerText = file.name;
+                    document.getElementById('preview-file').classList.remove('hidden');
+                    document.getElementById('preview-area').classList.remove('hidden');
+                    ui.showToast('Dokumen siap!', 'success');
+                };
+                reader.readAsDataURL(file);
+            },
+            toggleRecording: async () => {
+                if (recorder && recorder.state === "recording") {
+                    recorder.stop();
+                    clearInterval(recordInterval);
+                    document.getElementById('btn-record').classList.remove('recording-active', 'text-red-600', 'bg-red-50');
+                    document.getElementById('recording-timer').classList.add('hidden');
+                } else {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        recorder = new MediaRecorder(stream);
+                        audioChunks = [];
+                        recorder.ondataavailable = e => audioChunks.push(e.data);
+                        recorder.onstop = () => {
+                            const blob = new Blob(audioChunks, { type: 'audio/mp3' });
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                currentFile = { base64: e.target.result, type: 'audio', name: 'Voice Note' };
+                                document.getElementById('preview-audio').src = e.target.result;
+                                document.getElementById('preview-audio').classList.remove('hidden');
+                                document.getElementById('preview-area').classList.remove('hidden');
+                            };
+                            reader.readAsDataURL(blob);
+                        };
+                        recorder.start();
+                        recordStartTime = Date.now();
+                        document.getElementById('btn-record').classList.add('recording-active', 'text-red-600', 'bg-red-50');
+                        document.getElementById('recording-timer').classList.remove('hidden');
+                        recordInterval = setInterval(() => {
+                            const diff = Math.floor((Date.now() - recordStartTime) / 1000);
+                            const m = Math.floor(diff / 60).toString().padStart(2, '0');
+                            const s = (diff % 60).toString().padStart(2, '0');
+                            document.getElementById('recording-timer').innerText = `${m}:${s}`;
+                        }, 1000);
+                    } catch (e) { ui.showToast('Izin mic ditolak', 'error'); }
+                }
+            },
+            handleAvatarUpload: (input) => {
+                const file = input.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('edit-avatar-preview').src = e.target.result;
+                    document.getElementById('edit-avatar-placeholder').classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            },
+            clear: () => {
+                currentFile = { base64: null, type: null, name: null };
+                document.getElementById('preview-area').classList.add('hidden');
+                document.getElementById('preview-img').classList.add('hidden');
+                document.getElementById('preview-audio').classList.add('hidden');
+                document.getElementById('preview-file').classList.add('hidden');
+                document.getElementById('file-image').value = '';
+                if(document.getElementById('file-doc')) document.getElementById('file-doc').value = '';
+            }
         };
-        reader.readAsDataURL(file);
-    },
-
-    toggleRecording: async () => { /* kode yang sudah ada */ },
-
-    handleAvatarUpload: (input) => { /* kode yang sudah ada */ },
-
-    // UPDATE FUNGSI INI (Bagian Kedua - clear)
-    clear: () => {
-        currentFile = { base64: null, type: null, name: null };
-        document.getElementById('preview-area').classList.add('hidden');
-        document.getElementById('preview-img').classList.add('hidden');
-        document.getElementById('preview-audio').classList.add('hidden');
-        document.getElementById('preview-file').classList.add('hidden'); // Baris Baru
-        document.getElementById('file-image').value = '';
-        if(document.getElementById('file-doc')) document.getElementById('file-doc').value = ''; // Baris Baru
-    }
-};
-// ... kode lainnya ...
 
         const app = {
             init: async () => {
@@ -454,53 +507,124 @@
                 const sender = document.getElementById('input-sender').value.trim() || 'Anonim';
                 const text = document.getElementById('input-message').value.trim();
                 const btn = document.getElementById('btn-send');
+                
                 if (!text && !currentFile.base64) { ui.showToast('Tulis pesan dulu!', 'error'); return; }
+                
                 btn.disabled = true;
                 btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin w-4 h-4"></i>`;
                 lucide.createIcons();
+                
                 try {
                     await addDoc(collection(db, 'secreto_messages'), {
-                        roomId: currentRoomId, sender, text, file: currentFile.base64 ? currentFile : null,
-                        timestamp: serverTimestamp(), senderUid: user.uid
+                        roomId: currentRoomId,
+                        sender: sender,
+                        text: text,
+                        file: currentFile.base64 ? currentFile : null,
+                        timestamp: serverTimestamp(),
+                        senderUid: user.uid,
+                        upvotes: 0,
+                        downvotes: 0,
+                        score: 0,
+                        comments: []
                     });
                     document.getElementById('input-message').value = '';
                     media.clear();
                     ui.showToast('Terkirim!', 'success');
-                } catch(e) { ui.showToast('Gagal kirim', 'error'); } 
-                finally { btn.disabled = false; btn.innerHTML = `Kirim <i data-lucide="send" class="w-4 h-4"></i>`; lucide.createIcons(); }
+                } catch(e) { 
+                    console.error(e);
+                    ui.showToast('Gagal kirim', 'error'); 
+                } finally { 
+                    btn.disabled = false; 
+                    btn.innerHTML = `Kirim <i data-lucide="send" class="w-4 h-4"></i>`; 
+                    lucide.createIcons(); 
+                }
             },
             listenMessages: () => {
                 const q = query(collection(db, 'secreto_messages'), where('roomId', '==', currentRoomId));
                 onSnapshot(q, (snapshot) => {
                     const msgs = snapshot.docs.map(d => ({ id: d.id, ...d.data(), ts: d.data().timestamp?.toDate() }));
-                    msgs.sort((a, b) => (b.ts || 0) - (a.ts || 0));
-                    document.getElementById('msg-count').innerText = msgs.length;
+                    
+                    const searchVal = document.getElementById('search-input').value.toLowerCase();
+                    const filteredMsgs = msgs.filter(m => (m.text && m.text.toLowerCase().includes(searchVal)) || (m.sender && m.sender.toLowerCase().includes(searchVal)));
+
+                    const sortBy = document.getElementById('sort-select').value;
+                    if (sortBy === 'newest') {
+                        filteredMsgs.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+                    } else if (sortBy === 'oldest') {
+                        filteredMsgs.sort((a, b) => (a.ts || 0) - (b.ts || 0));
+                    } else if (sortBy === 'popular') {
+                        filteredMsgs.sort((a, b) => (b.score || 0) - (a.score || 0));
+                    }
+
+                    document.getElementById('msg-count').innerText = filteredMsgs.length;
                     const container = document.getElementById('feed-container');
                     container.innerHTML = '';
-                    if (msgs.length === 0) {
+                    
+                    if (filteredMsgs.length === 0) {
                         container.innerHTML = `<div class="text-center py-10 opacity-50"><i data-lucide="inbox" class="w-12 h-12 mx-auto mb-2 text-gray-300"></i><p class="text-sm font-medium text-gray-400">Belum ada pesan.</p></div>`;
                         lucide.createIcons();
                         return;
                     }
-                    msgs.forEach(msg => {
+                    
+                    filteredMsgs.forEach(msg => {
                         const canDelete = isOwner || (user && msg.senderUid === user.uid);
                         const time = msg.ts ? msg.ts.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...';
+                        
+                        // Check User Vote Status
+                        const myVote = localStorage.getItem(`vote_${msg.id}`);
+                        const upClass = myVote === 'up' ? 'text-green-600 font-extrabold bg-green-50' : 'text-gray-400 hover:text-green-600 hover:bg-gray-100';
+                        const downClass = myVote === 'down' ? 'text-red-500 font-extrabold bg-red-50' : 'text-gray-400 hover:text-red-500 hover:bg-gray-100';
+                        const scoreColor = (msg.score > 0) ? 'text-green-600' : (msg.score < 0 ? 'text-red-500' : 'text-gray-500');
+
                         let mediaHtml = '';
                         if (msg.file) {
                             if (msg.file.type === 'image') mediaHtml = `<img src="${msg.file.base64}" class="mt-3 rounded-lg w-full max-h-80 object-cover border border-gray-100">`;
                             else if (msg.file.type === 'audio') mediaHtml = `<div class="mt-3"><audio controls src="${msg.file.base64}"></audio></div>`;
+                            else if (msg.file.type === 'file') mediaHtml = `<div class="mt-3 flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100 text-sm text-gray-700"><i data-lucide="file-text" class="w-4 h-4"></i> ${msg.file.name}</div>`;
                         }
+
                         const el = document.createElement('div');
-                        el.className = "bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4 transition hover:shadow-md";
+                        el.className = "bg-white p-5 rounded-2xl shadow-sm border border-gray-100 transition hover:shadow-md";
+                        
                         el.innerHTML = `
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex items-center gap-2.5">
                                     <div class="w-8 h-8 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 uppercase">${msg.sender.charAt(0)}</div>
-                                    <div><h4 class="text-sm font-bold text-gray-900">${escapeHtml(msg.sender)}</h4><p class="text-[10px] text-gray-400 font-medium">${time}</p></div>
+                                    <div>
+                                        <h4 class="text-sm font-bold text-gray-900">${escapeHtml(msg.sender)}</h4>
+                                        <p class="text-[10px] text-gray-400 font-medium">${time}</p>
+                                    </div>
                                 </div>
                                 ${canDelete ? `<button onclick="window.deleteMessage('${msg.id}')" class="text-gray-300 hover:text-red-500 p-1.5 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
                             </div>
-                            <div class="pl-11"><p class="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">${escapeHtml(msg.text)}</p>${mediaHtml}</div>
+                            
+                            <div class="pl-11">
+                                <p class="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">${escapeHtml(msg.text)}</p>
+                                ${mediaHtml}
+                                
+                                <div class="flex items-center gap-4 mt-4 pt-3 border-t border-gray-50">
+                                    <div class="flex items-center gap-1 bg-white border border-gray-200 rounded-full px-1.5 py-1 shadow-sm">
+                                        <button onclick="window.voteMessage('${msg.id}', 'up')" class="${upClass} transition p-1.5 rounded-full active:scale-90"><i data-lucide="chevron-up" class="w-5 h-5"></i></button>
+                                        <span class="text-xs font-bold ${scoreColor} min-w-[20px] text-center transition-colors">${msg.score || 0}</span>
+                                        <button onclick="window.voteMessage('${msg.id}', 'down')" class="${downClass} transition p-1.5 rounded-full active:scale-90"><i data-lucide="chevron-down" class="w-5 h-5"></i></button>
+                                    </div>
+                                    
+                                    <button onclick="window.addComment('${msg.id}')" class="flex items-center gap-1.5 text-gray-400 hover:text-black transition px-3 py-1.5 hover:bg-gray-50 rounded-full group active:scale-95">
+                                        <i data-lucide="message-square" class="w-4 h-4 group-hover:fill-black/10 transition"></i>
+                                        <span class="text-[11px] font-bold">${msg.comments ? msg.comments.length : 0}</span>
+                                    </button>
+                                </div>
+
+                                ${msg.comments && msg.comments.length > 0 ? `
+                                    <div class="mt-3 space-y-2 border-l-2 border-gray-100 pl-3">
+                                        ${msg.comments.map(c => `
+                                            <div class="bg-gray-50/80 p-2 rounded-lg">
+                                                <p class="text-[11px] text-gray-700"><span class="font-bold text-gray-900">${c.sender}:</span> ${escapeHtml(c.text)}</p>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
                         `;
                         container.appendChild(el);
                     });
@@ -510,10 +634,99 @@
         };
 
         window.app = app; window.ui = ui; window.media = media;
+        
         window.deleteMessage = async (id) => {
             if(!confirm("Hapus pesan ini?")) return;
             try { await deleteDoc(doc(db, 'secreto_messages', id)); ui.showToast('Pesan dihapus', 'info'); } catch(e) { ui.showToast('Gagal hapus', 'error'); }
         };
+        
+        // LOGIKA VOTING CERDAS (TOGGLE & SWITCH)
+        window.voteMessage = async (msgId, type) => {
+            const docRef = doc(db, 'secreto_messages', msgId);
+            const snap = await getDoc(docRef);
+            if (!snap.exists()) return;
+
+            let { upvotes = 0, downvotes = 0 } = snap.data();
+            
+            // Cek status vote user saat ini di localStorage
+            const currentVote = localStorage.getItem(`vote_${msgId}`);
+            let newVoteState = null;
+
+            // Logika Toggle & Switch
+            if (type === 'up') {
+                if (currentVote === 'up') {
+                    // UNVOTE: Sudah upvote, klik lagi -> Netral
+                    upvotes--;
+                    newVoteState = null;
+                } else if (currentVote === 'down') {
+                    // SWITCH: Dari down ke up
+                    downvotes--;
+                    upvotes++;
+                    newVoteState = 'up';
+                } else {
+                    // VOTE BARU: Dari netral ke up
+                    upvotes++;
+                    newVoteState = 'up';
+                }
+            } else if (type === 'down') {
+                if (currentVote === 'down') {
+                    // UNVOTE: Sudah downvote, klik lagi -> Netral
+                    downvotes--;
+                    newVoteState = null;
+                } else if (currentVote === 'up') {
+                    // SWITCH: Dari up ke down
+                    upvotes--;
+                    downvotes++;
+                    newVoteState = 'down';
+                } else {
+                    // VOTE BARU: Dari netral ke down
+                    downvotes++;
+                    newVoteState = 'down';
+                }
+            }
+            
+            try {
+                // Update Firestore
+                await updateDoc(docRef, {
+                    upvotes,
+                    downvotes,
+                    score: upvotes - downvotes
+                });
+
+                // Update LocalStorage
+                if (newVoteState) {
+                    localStorage.setItem(`vote_${msgId}`, newVoteState);
+                    ui.showToast(newVoteState === 'up' ? 'Upvoted!' : 'Downvoted!', 'success');
+                } else {
+                    localStorage.removeItem(`vote_${msgId}`);
+                    ui.showToast('Vote dibatalkan', 'info');
+                }
+            } catch (e) {
+                console.error(e);
+                ui.showToast('Gagal memproses suara', 'error');
+            }
+        };
+
+        window.addComment = async (msgId) => {
+            const commentText = prompt("Tulis komentar anonim Anda:");
+            if (!commentText || commentText.trim() === "") return;
+
+            const docRef = doc(db, 'secreto_messages', msgId);
+            try {
+                await updateDoc(docRef, {
+                    comments: arrayUnion({
+                        text: commentText,
+                        timestamp: new Date().toISOString(),
+                        sender: "Anonim"
+                    })
+                });
+                ui.showToast('Komentar berhasil dikirim!', 'success');
+            } catch (e) {
+                console.error(e);
+                ui.showToast('Gagal mengirim komentar', 'error');
+            }
+        };
+
         function escapeHtml(text) { return text ? text.replace(/</g, "&lt;") : ""; }
         app.init();
     </script>
